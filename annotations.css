@@ -1,53 +1,86 @@
-/* ========== PROGRESS SECTION ========== */
-.progress-section {
+/* ========== PROGRESS BAR ========== */
+#progressSection {
     padding: 16px;
-    border-bottom: 1px solid var(--gray-200);
     background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+    margin-bottom: 16px;
 }
 
-.progress-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.progress-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--gray-600);
-}
-
-.progress-label i {
-    color: var(--primary);
-}
-
-.progress-text {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--gray-700);
-}
-
-.progress-bar-container {
+.progress-container {
     width: 100%;
-    height: 6px;
+    height: 8px;
     background: var(--gray-200);
-    border-radius: 3px;
+    border-radius: 4px;
     overflow: hidden;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary), var(--success));
-    border-radius: 3px;
+    background: linear-gradient(90deg, var(--primary), #818cf8);
+    border-radius: 4px;
     transition: width 0.3s ease;
     width: 0%;
+}
+
+.progress-text {
+    font-size: 12px;
+    color: var(--gray-600);
+    text-align: center;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+/* ========== FILE INPUT & EXPORT BUTTONS ========== */
+.file-input-wrapper {
+    margin-bottom: 12px;
+}
+
+.file-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, var(--primary) 0%, #818cf8 100%);
+    color: var(--white);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.file-label::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.file-label:hover::before {
+    left: 100%;
+}
+
+.file-label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+}
+
+.file-label:active {
+    transform: translateY(0);
+}
+
+.file-label i {
+    font-size: 16px;
 }
 
 .btn-export {
@@ -55,24 +88,59 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 8px 12px;
-    background: var(--gray-900);
+    gap: 10px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: var(--white);
     border: none;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
+    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.btn-export::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-export:hover::before {
+    left: 100%;
 }
 
 .btn-export:hover {
-    background: var(--gray-700);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+}
+
+.btn-export:active {
+    transform: translateY(0);
 }
 
 .btn-export i {
-    font-size: 11px;
+    font-size: 16px;
+}
+
+.btn-export:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-export:disabled:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
 /* ========== ITEM STATES ========== */

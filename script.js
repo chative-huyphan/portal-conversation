@@ -6,7 +6,7 @@ let page = 0;
 const PAGE_SIZE = 50;
 
 // DOM
-const fileInput = document.getElementById('file');
+const fileInput = document.getElementById('fileInput');
 const empty = document.getElementById('empty');
 const items = document.getElementById('items');
 const detail = document.getElementById('detail');
@@ -19,6 +19,7 @@ const listTitle = document.getElementById('listTitle');
 const loadMore = document.getElementById('loadMore');
 const btnLoad = document.getElementById('btnLoad');
 const loading = document.getElementById('loading');
+const exportBtn = document.getElementById('exportAnnotations');
 
 // Filter elements
 const filterAnnotationCheckboxes = document.querySelectorAll('.filter-annotation-checkbox');
@@ -137,14 +138,18 @@ async function handleFile(e) {
                 progressSection.style.display = 'block';
             }
 
-            // Update progress
-            await updateProgress();
+            // Update progress - REMOVED, using export button instead
         }
 
         // UI
         empty.style.display = 'none';
         filters.style.display = 'flex';
         listHeader.style.display = 'flex';
+
+        // Show export button
+        if (exportBtn) {
+            exportBtn.style.display = 'flex';
+        }
 
         updateStats();
         populateFilters();

@@ -54,9 +54,6 @@ async function quickAnnotate(event, conversationId, annotation) {
             updateItemAnnotationState(itemEl, annotation);
         }
 
-        // Update progress
-        await updateProgress();
-
         const action = annotation === 'pick' ? 'Picked' : annotation === 'banned' ? 'Banned' : 'Cleared';
         console.log(`✓ ${action}: ${conversationId} (persisted to IndexedDB)`);
 
@@ -108,35 +105,41 @@ async function markAsRead(conversation) {
     }
 }
 
-// Update progress bar
-async function updateProgress() {
-    if (!dbReady) return;
-
-    try {
-        const progress = await conversationDB.getProgress();
-        const percentage = progress.total > 0 ? ((progress.annotated + progress.read) / progress.total) * 100 : 0;
-
-        const progressBar = document.getElementById('progressBar');
-        const progressText = document.getElementById('progressText');
-
-        if (progressBar) {
-            progressBar.style.width = `${percentage}%`;
-        }
-
-        if (progressText) {
-            progressText.textContent = `${progress.annotated + progress.read}/${progress.total} (✓${progress.picked} ✗${progress.banned} 📖${progress.read})`;
-        }
-    } catch (error) {
-        console.error('Failed to update progress:', error);
-    }
-}
-
-// Export annotations
+// Show export modal
 async function exportAnnotations() {
     if (!dbReady) {
         alert('Database not ready');
         return;
     }
+
+    try {
+        // Get progress to show counts
+        const progress = await conversationDB.getProgress();
+
+        // Update counts in modal
+        document.getElementById('pickedCount').textContent = `${progress.picked} conversations`;
+        document.getElementById('bannedCount').textContent = `${progress.banned} conversations`;
+
+        // Show modal
+        document.getElementById('exportModal').style.display = 'flex';
+    } catch (error) {
+        console.error('Failed to prepare export:', error);
+        alert('Failed to prepare export');
+    }
+}
+
+// Close export modal
+function closeExportModal() {
+    document.getElementById('exportModal').style.display = 'none';
+}
+
+// Confirm and execute export
+async function confirmExport() {
+    const exportPicked = document.getElementById('exportPicked').checked;
+    const exportBanned = document.getElementById('exportBanned').checked;
+
+    // Close modal
+    closeExportModal();
 
     try {
         showLoading();
@@ -148,7 +151,7 @@ async function exportAnnotations() {
         const picked = annotations.filter(a => a.annotation === 'pick');
         const banned = annotations.filter(a => a.annotation === 'banned');
 
-        // Create summary report
+        // Create summary report (always exported)
         const report = {
             exported_at: new Date().toISOString(),
             progress,
@@ -168,28 +171,36 @@ async function exportAnnotations() {
         };
 
         const timestamp = new Date().toISOString().split('T')[0];
+        const exportedFiles = [];
 
-        // Export summary
+        // Always export summary
         downloadJSON(report, `annotations_summary_${timestamp}.json`);
+        exportedFiles.push('annotations_summary');
 
-        // Export picked conversations (full data)
-        if (picked.length > 0) {
+        // Export picked if selected
+        if (exportPicked && picked.length > 0) {
             downloadJSON(picked, `picked_conversations_${timestamp}.json`);
+            exportedFiles.push(`picked (${picked.length})`);
         }
 
-        // Export banned conversations (full data)
-        if (banned.length > 0) {
+        // Export banned if selected
+        if (exportBanned && banned.length > 0) {
             downloadJSON(banned, `banned_conversations_${timestamp}.json`);
+            exportedFiles.push(`banned (${banned.length})`);
         }
 
         hideLoading();
-        alert(`✅ Exported successfully!\n\nSummary: ${annotations.length} annotations\n✓ Picked: ${picked.length} conversations\n✗ Banned: ${banned.length} conversations\n📖 Read: ${progress.read} conversations\n\nFiles downloaded:\n- annotations_summary_${timestamp}.json\n${picked.length > 0 ? `- picked_conversations_${timestamp}.json\n` : ''}${banned.length > 0 ? `- banned_conversations_${timestamp}.json` : ''}`);
+        alert(`✅ Exported successfully!\n\nFiles downloaded:\n${exportedFiles.map(f => `- ${f}`).join('\n')}`);
     } catch (error) {
         hideLoading();
         console.error('Failed to export:', error);
         alert('Failed to export annotations');
     }
 }
+
+// Make functions globally available
+window.closeExportModal = closeExportModal;
+window.confirmExport = confirmExport;
 
 // Helper function to download JSON
 function downloadJSON(data, filename) {
@@ -381,7 +392,8 @@ async function syncAllAnnotations() {
 window.quickAnnotate = quickAnnotate;
 window.exportAnnotations = exportAnnotations;
 window.markAsRead = markAsRead;
-window.updateProgress = updateProgress;
 window.loadItemAnnotations = loadItemAnnotations;
 window.syncAllAnnotations = syncAllAnnotations;
 window.applyRestoredSession = applyRestoredSession;
+window.closeExportModal = closeExportModal;
+window.confirmExport = confirmExport;

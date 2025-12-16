@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="annotations.css">
+    <link rel="stylesheet" href="export-modal.css">
 </head>
 
 <body>
@@ -18,26 +19,20 @@
                 <i class="fas fa-comments"></i>
                 <h1>Data Portal</h1>
             </div>
-
-            <div class="upload-zone">
-                <label for="file" class="upload-label">
+            <!-- File Input -->
+            <div class="file-input-wrapper">
+                <label for="fileInput" class="file-label">
                     <i class="fas fa-upload"></i>
-                    <span>Load Data</span>
-                    <input type="file" id="file" accept=".json" hidden>
+                    <span>Load JSON File</span>
+                    <input type="file" id="fileInput" accept=".json" style="display: none;">
                 </label>
             </div>
 
-            <!-- Progress Section -->
-            <div id="progressSection" style="display: none;">
-                <div class="progress-container">
-                    <div class="progress-bar" id="progressBar"></div>
-                </div>
-                <div class="progress-text" id="progressText">0/0</div>
-                <button class="btn-export" id="exportAnnotations">
-                    <i class="fas fa-download"></i>
-                    Export Annotations
-                </button>
-            </div>
+            <!-- Export Button -->
+            <button class="btn-export" id="exportAnnotations" style="display: none;">
+                <i class="fas fa-download"></i>
+                Export Annotations
+            </button>
 
             <!-- Export Modal -->
             <div id="exportModal" class="modal" style="display: none;">
