@@ -127,50 +127,47 @@ async function handleFile(e) {
 
         filtered = [...data];
 
-        // Import into IndexedDB if ready
-        if (window.dbReady) {
-            console.log('Importing conversations into IndexedDB...');
-            await conversationDB.importConversations(data);
-
-            // Sync annotations from DB to data objects for filtering
-            await syncAllAnnotations();
-
-            // Update label filter options
-            await updateLabelFilterOptions();
-
-            // Show progress section
-            const progressSection = document.getElementById('progressSection');
-            if (progressSection) {
-                progressSection.style.display = 'block';
-            }
-
-            // Update progress - REMOVED, using export button instead
-        }
-
-        // UI
+        // UI first - show data immediately
         empty.style.display = 'none';
         filters.style.display = 'flex';
         listHeader.style.display = 'flex';
 
-        // Show export button
         if (exportBtn) {
             exportBtn.style.display = 'flex';
         }
 
         updateStats();
         populateFilters();
+        page = 0;
+        items.innerHTML = '';
+        renderItems();
 
-        // Apply restored session if exists (before rendering)
+        // Import into IndexedDB in background (non-blocking)
+        if (window.dbReady) {
+            console.log('⏳ Background: Importing to DB...');
+            conversationDB.importConversations(data).then(async () => {
+                console.log('✅ Background: Import complete');
+                await syncAllAnnotations();
+                await updateLabelFilterOptions();
+                
+                const progressSection = document.getElementById('progressSection');
+                if (progressSection) {
+                    progressSection.style.display = 'block';
+                }
+                
+                // Re-render to show annotations
+                page = 0;
+                items.innerHTML = '';
+                renderItems();
+            }).catch(err => {
+                console.error('❌ Background import failed:', err);
+            });
+        }
+
+        // Apply restored session if exists
         if (window.applyRestoredSession) {
             applyRestoredSession();
         }
-
-        // Reset pagination and clear items before rendering
-        page = 0;
-        items.innerHTML = '';
-
-        // Render items AFTER syncing annotations
-        renderItems();
 
     } catch (err) {
         alert('Error: ' + err.message);
@@ -614,16 +611,20 @@ function renderDetail(item) {
 
             <div class="detail-labels-section">
                 <div class="detail-label-title">
-                    <i class="fas fa-tag"></i>
                     <span>Labels</span>
+                    <button class="btn-add-label" id="btnAddLabel" onclick="toggleLabelInput()" title="Add label">
+                        <i class="fas fa-plus"></i>
+                    </button>
                 </div>
-                <input
-                    type="text"
-                    class="label-input"
-                    id="labelInput"
-                    placeholder="Add label..."
-                    data-conversation-id="${item.conversation_id}"
-                >
+                <div class="label-input-wrapper" id="labelInputWrapper" style="display: none;">
+                    <input
+                        type="text"
+                        class="label-input"
+                        id="labelInput"
+                        placeholder="Enter label..."
+                        data-conversation-id="${item.conversation_id}"
+                    >
+                </div>
                 <div class="labels-display" id="labelsDisplay">
                     ${(item.labels || []).map(label => `
                         <span class="label-tag">
@@ -638,7 +639,6 @@ function renderDetail(item) {
         </div>
 
         <div class="messages">
-            <div class="messages-title">Messages</div>
             <div class="msg-list">
                 ${msgs.map(m => {
                     if (m.event) {
@@ -662,18 +662,6 @@ function renderDetail(item) {
             </div>
         </div>
     `;
-
-    // Add scroll listener for sticky header shadow
-    const detailPanel = document.getElementById('detail');
-    const detailHeader = document.getElementById('detailHeader');
-
-    detailPanel.addEventListener('scroll', () => {
-        if (detailPanel.scrollTop > 10) {
-            detailHeader.classList.add('scrolled');
-        } else {
-            detailHeader.classList.remove('scrolled');
-        }
-    });
 }
 
 
@@ -913,5 +901,17 @@ document.addEventListener('keypress', async function(e) {
     }
 });
 
+function toggleLabelInput() {
+    const wrapper = document.getElementById('labelInputWrapper');
+    if (wrapper) {
+        wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
+        if (wrapper.style.display === 'block') {
+            const input = wrapper.querySelector('.label-input');
+            if (input) input.focus();
+        }
+    }
+}
+
 window.addLabel = addLabel;
 window.removeLabel = removeLabel;
+window.toggleLabelInput = toggleLabelInput;

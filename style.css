@@ -622,8 +622,11 @@ body {
 /* ========== DETAIL ========== */
 .detail {
     background: var(--white);
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     padding: 24px;
+    height: 100vh;
 }
 
 .detail-empty {
@@ -647,45 +650,37 @@ body {
 }
 
 .detail-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
     background: var(--white);
-    margin-bottom: 24px;
-    padding: 20px 24px;
-    margin: -24px -24px 24px -24px;
-    border-bottom: 2px solid var(--gray-100);
-    transition: box-shadow 0.2s;
-    box-shadow: 0 -50px 20px #ffff !important;
-}
-
-.detail-header.scrolled {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    margin: -24px -24px 8px -24px;
+    border-bottom: 1px solid var(--gray-200);
+    flex-shrink: 0;
 }
 
 .detail-title {
-    font-size: 18px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: -0.01em;
-    margin-bottom: 20px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     color: var(--gray-900);
 }
 
 .detail-ids {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 6px;
+    margin-bottom: 6px;
 }
 
 .id-card {
     background: var(--gray-50);
     border: 1px solid var(--gray-200);
-    border-radius: 8px;
-    padding: 12px 16px;
+    border-radius: 4px;
+    padding: 6px 8px;
     transition: all 0.2s;
 }
 
@@ -697,17 +692,17 @@ body {
 .id-card-label {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 10px;
+    gap: 4px;
+    font-size: 9px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--gray-500);
-    margin-bottom: 8px;
+    margin-bottom: 3px;
 }
 
 .id-card-label i {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--primary);
 }
 
@@ -715,17 +710,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 6px;
 }
 
 .id-card-value code {
     flex: 1;
     font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-    font-size: 12px;
+    font-size: 10px;
     color: var(--gray-900);
     background: var(--white);
-    padding: 6px 10px;
-    border-radius: 4px;
+    padding: 4px 6px;
+    border-radius: 3px;
     border: 1px solid var(--gray-200);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -735,14 +730,16 @@ body {
 .copy-btn {
     background: var(--white);
     border: 1px solid var(--gray-300);
-    border-radius: 4px;
-    padding: 6px 10px;
+    border-radius: 3px;
+    padding: 4px 6px;
     cursor: pointer;
     transition: all 0.2s;
     color: var(--gray-600);
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 24px;
+    min-height: 24px;
 }
 
 .copy-btn:hover {
@@ -752,13 +749,14 @@ body {
 }
 
 .copy-btn i {
-    font-size: 12px;
+    font-size: 10px;
 }
 
 .detail-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
+    gap: 12px;
+    margin-bottom: 0;
 }
 
 .detail-item {
@@ -803,8 +801,12 @@ body {
 
 /* ========== MESSAGES ========== */
 .messages {
-    margin-top: 24px;
-    padding-top: 24px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 0;
+    border-top: 1px solid var(--gray-200);
+    min-height: 0;
 }
 
 .messages-title {
@@ -813,10 +815,15 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--gray-500);
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+    padding: 0 12px;
     display: flex;
     align-items: center;
     gap: 6px;
+    position: sticky;
+    top: 0;
+    background: var(--white);
+    z-index: 1;
 }
 
 .messages-title::before {
@@ -831,6 +838,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    padding: 0 12px 12px 12px;
 }
 
 .msg {
@@ -974,6 +982,10 @@ body {
     .detail {
         display: none;
     }
+
+    .sidebar {
+        width: 220px !important;
+    }
 }
 
 @media (max-width: 768px) {
@@ -985,8 +997,418 @@ body {
         display: none;
     }
 
+    .list {
+        border-right: none;
+    }
+
     body {
+        font-size: 13px;
+    }
+
+    .item {
+        padding: 10px 12px;
+    }
+
+    .item-header {
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .item-conv-id {
+        font-size: 11px;
+    }
+
+    .item-time {
+        font-size: 11px;
+    }
+
+    .badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .item-preview {
+        font-size: 11px;
+        margin: 6px 0;
+    }
+
+    .item-labels {
+        margin: 4px 0;
+    }
+
+    .item-label-tag {
+        font-size: 9px;
+        padding: 2px 6px;
+    }
+
+    .item-quick-actions {
+        gap: 3px;
+        margin-top: 6px;
+    }
+
+    .btn-quick {
+        padding: 6px;
+        font-size: 12px;
+    }
+
+    .detail {
+        display: block;
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 100%;
+        height: 100vh;
+        z-index: 1000;
+        transition: right 0.3s ease;
+    }
+
+    .detail.active {
+        right: 0;
+    }
+
+    .detail-header {
+        padding: 12px 14px;
+    }
+
+    .detail-title {
         font-size: 14px;
+    }
+
+    .detail-ids {
+        gap: 8px;
+        margin: 10px 0;
+    }
+
+    .id-card {
+        padding: 8px;
+    }
+
+    .id-card-label {
+        font-size: 10px;
+        margin-bottom: 4px;
+    }
+
+    .id-card-value {
+        gap: 6px;
+    }
+
+    .id-card-value code {
+        font-size: 10px;
+    }
+
+    .detail-grid {
+        gap: 8px;
+    }
+
+    .detail-item {
+        padding: 8px;
+    }
+
+    .detail-label {
+        font-size: 10px;
+        margin-bottom: 4px;
+    }
+
+    .detail-value {
+        font-size: 12px;
+    }
+
+    .messages-title {
+        font-size: 12px;
+        padding: 10px 14px;
+    }
+
+    .msg {
+        padding: 8px 12px;
+        margin: 6px 0;
+    }
+
+    .msg-header {
+        font-size: 10px;
+        gap: 6px;
+    }
+
+    .msg-text {
+        font-size: 11px;
+        margin-top: 4px;
+    }
+
+    .detail-labels-section {
+        padding: 8px 12px;
+        margin: 6px 0;
+    }
+
+    .detail-label-title {
+        font-size: 10px;
+        gap: 4px;
+        margin-bottom: 6px;
+    }
+
+    .label-input {
+        padding: 5px 8px;
+        font-size: 11px;
+    }
+
+    .label-tag {
+        padding: 3px 6px;
+        font-size: 10px;
+        gap: 3px;
+    }
+
+    .label-remove {
+        width: 12px;
+        height: 12px;
+        font-size: 8px;
+    }
+}
+
+@media (max-width: 576px) {
+    body {
+        font-size: 12px;
+    }
+
+    .sidebar {
+        display: none !important;
+    }
+
+    .app {
+        grid-template-columns: 1fr;
+    }
+
+    .item {
+        padding: 8px 10px;
+    }
+
+    .item-header {
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 4px;
+    }
+
+    .item-conv-id {
+        font-size: 10px;
+        word-break: break-all;
+    }
+
+    .item-time {
+        font-size: 10px;
+    }
+
+    .item-meta {
+        flex-wrap: wrap;
+        gap: 3px;
+    }
+
+    .badge {
+        font-size: 9px;
+        padding: 2px 5px;
+    }
+
+    .item-preview {
+        font-size: 10px;
+        margin: 4px 0;
+        -webkit-line-clamp: 1;
+    }
+
+    .item-labels {
+        margin: 3px 0;
+        gap: 3px;
+    }
+
+    .item-label-tag {
+        font-size: 8px;
+        padding: 2px 5px;
+    }
+
+    .item-quick-actions {
+        gap: 2px;
+        margin-top: 4px;
+    }
+
+    .btn-quick {
+        padding: 5px;
+        font-size: 11px;
+        min-width: 32px;
+    }
+
+    .btn-quick i {
+        font-size: 11px;
+    }
+
+    .detail {
+        padding: 0;
+    }
+
+    .detail-header {
+        padding: 10px 12px;
+    }
+
+    .detail-title {
+        font-size: 13px;
+        gap: 6px;
+    }
+
+    .detail-ids {
+        flex-direction: column;
+        gap: 6px;
+        margin: 8px 0;
+    }
+
+    .id-card {
+        padding: 6px;
+    }
+
+    .id-card-label {
+        font-size: 9px;
+        margin-bottom: 3px;
+    }
+
+    .id-card-value {
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    .id-card-value code {
+        font-size: 9px;
+        word-break: break-all;
+    }
+
+    .copy-btn {
+        min-width: 24px;
+        min-height: 24px;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .detail-item {
+        padding: 6px;
+    }
+
+    .detail-label {
+        font-size: 9px;
+        margin-bottom: 2px;
+    }
+
+    .detail-value {
+        font-size: 11px;
+    }
+
+    .msg-list {
+        padding: 0;
+    }
+
+    .msg {
+        padding: 6px 10px;
+        margin: 4px 0;
+    }
+
+    .msg-header {
+        font-size: 9px;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .msg-text {
+        font-size: 10px;
+        margin-top: 3px;
+        word-break: break-word;
+    }
+
+    .detail-labels-section {
+        padding: 6px 10px;
+        margin: 4px 0;
+    }
+
+    .detail-label-title {
+        font-size: 9px;
+        gap: 3px;
+        margin-bottom: 4px;
+    }
+
+    .label-input {
+        padding: 4px 6px;
+        font-size: 10px;
+    }
+
+    .label-input::placeholder {
+        font-size: 9px;
+    }
+
+    .labels-display {
+        gap: 4px;
+    }
+
+    .label-tag {
+        padding: 2px 5px;
+        font-size: 9px;
+        gap: 2px;
+    }
+
+    .label-remove {
+        width: 12px;
+        height: 12px;
+        font-size: 7px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        font-size: 11px;
+    }
+
+    .item {
+        padding: 6px 8px;
+    }
+
+    .item-conv-id {
+        font-size: 9px;
+    }
+
+    .badge {
+        font-size: 8px;
+        padding: 1px 4px;
+    }
+
+    .btn-quick {
+        padding: 4px;
+        font-size: 10px;
+        min-width: 28px;
+        min-height: 28px;
+    }
+
+    .detail-header {
+        padding: 8px 10px;
+    }
+
+    .detail-title {
+        font-size: 12px;
+    }
+
+    .detail-grid {
+        gap: 4px;
+    }
+
+    .detail-item {
+        padding: 4px;
+    }
+
+    .detail-label {
+        font-size: 8px;
+    }
+
+    .detail-value {
+        font-size: 10px;
+    }
+
+    .msg {
+        padding: 4px 8px;
+    }
+
+    .msg-text {
+        font-size: 9px;
     }
 }
 
@@ -1011,6 +1433,7 @@ body {
 .detail-label-title {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 6px;
     font-size: 11px;
     font-weight: 600;
@@ -1023,6 +1446,47 @@ body {
 .detail-label-title i {
     color: var(--primary);
     font-size: 12px;
+}
+
+.btn-add-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--primary);
+    background: transparent;
+    color: var(--primary);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.btn-add-label:hover {
+    background: var(--primary-light);
+}
+
+.btn-add-label:active {
+    transform: scale(0.95);
+}
+
+.label-input-wrapper {
+    margin-bottom: 8px;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .labels-input-group {
