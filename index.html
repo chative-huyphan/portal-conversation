@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversation Data Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="annotations.css">
+</head>
+
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-comments"></i>
+                <h1>Data Portal</h1>
+            </div>
+
+            <div class="upload-zone">
+                <label for="file" class="upload-label">
+                    <i class="fas fa-upload"></i>
+                    <span>Load Data</span>
+                    <input type="file" id="file" accept=".json" hidden>
+                </label>
+            </div>
+
+            <!-- Progress Section -->
+            <div id="progressSection" style="display: none;">
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-text" id="progressText">0/0</div>
+                <button class="btn-export" id="exportAnnotations">
+                    <i class="fas fa-download"></i>
+                    Export Annotations
+                </button>
+            </div>
+
+            <!-- Export Modal -->
+            <div id="exportModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-download"></i> Export Annotations</h3>
+                        <button class="modal-close" onclick="closeExportModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Select what to export:</p>
+                        <div class="export-options">
+                            <label class="export-option">
+                                <input type="checkbox" id="exportSummary" checked disabled>
+                                <span class="export-option-text">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <strong>Summary Report</strong>
+                                    <small>Statistics and metadata (always included)</small>
+                                </span>
+                            </label>
+                            <label class="export-option">
+                                <input type="checkbox" id="exportPicked" checked>
+                                <span class="export-option-text">
+                                    <i class="fas fa-check-circle"></i>
+                                    <strong>Picked Conversations</strong>
+                                    <small id="pickedCount">Full data of picked conversations</small>
+                                </span>
+                            </label>
+                            <label class="export-option">
+                                <input type="checkbox" id="exportBanned">
+                                <span class="export-option-text">
+                                    <i class="fas fa-ban"></i>
+                                    <strong>Banned Conversations</strong>
+                                    <small id="bannedCount">Full data of banned conversations</small>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" onclick="closeExportModal()">Cancel</button>
+                        <button class="btn-primary" onclick="confirmExport()">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filters" id="filters" style="display: none;">
+                <div class="input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search" placeholder="Search conversations..." class="input">
+                </div>
+
+                <div class="select-wrapper">
+                    <i class="fas fa-sort"></i>
+                    <select id="sort" class="select">
+                        <option value="date-desc">Latest First</option>
+                        <option value="date-asc">Oldest First</option>
+                        <option value="messages-desc">Most Messages</option>
+                        <option value="duration-desc">Longest Duration</option>
+                    </select>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-label">
+                        <i class="fas fa-filter"></i>
+                        <span>Filters</span>
+                        <button class="btn-clear-filters" id="clearFilters" style="display: none;">
+                            <i class="fas fa-times"></i>
+                            Clear
+                        </button>
+                    </div>
+
+                    <div class="filter-group">
+                        <div class="filter-group-label">
+                            <i class="fas fa-tag"></i>
+                            <span>Annotations</span>
+                        </div>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="filter-annotation-checkbox" value="pick">
+                                <span class="checkbox-text">✓ Picked</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="filter-annotation-checkbox" value="banned">
+                                <span class="checkbox-text">✗ Banned</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="filter-annotation-checkbox" value="read">
+                                <span class="checkbox-text">📖 Read</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="filter-annotation-checkbox" value="unread">
+                                <span class="checkbox-text">📄 Unread</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="select-wrapper">
+                        <i class="fas fa-building"></i>
+                        <select id="filterOrgId" class="select">
+                            <option value="">All Organizations</option>
+                        </select>
+                    </div>
+
+                    <div class="select-wrapper">
+                        <i class="fas fa-desktop"></i>
+                        <select id="filterPlatform" class="select">
+                            <option value="">All Platforms</option>
+                        </select>
+                    </div>
+
+                    <div class="select-wrapper">
+                        <i class="fas fa-info-circle"></i>
+                        <select id="filterStatus" class="select">
+                            <option value="">All Status</option>
+                        </select>
+                    </div>
+
+                    <div class="select-wrapper">
+                        <i class="fas fa-language"></i>
+                        <select id="filterLanguage" class="select">
+                            <option value="">All Languages</option>
+                        </select>
+                    </div>
+
+                    <div class="select-wrapper">
+                        <i class="fas fa-comment"></i>
+                        <select id="filterMessages" class="select">
+                            <option value="">All Message Counts</option>
+                            <option value="1-5">1-5 messages</option>
+                            <option value="6-10">6-10 messages</option>
+                            <option value="11-20">11-20 messages</option>
+                            <option value="21-50">21-50 messages</option>
+                            <option value="51+">51+ messages</option>
+                        </select>
+                    </div>
+
+                    <div class="select-wrapper">
+                        <i class="far fa-clock"></i>
+                        <select id="filterDuration" class="select">
+                            <option value="">All Durations</option>
+                            <option value="0-5">0-5 minutes</option>
+                            <option value="5-15">5-15 minutes</option>
+                            <option value="15-30">15-30 minutes</option>
+                            <option value="30-60">30-60 minutes</option>
+                            <option value="60+">60+ minutes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="stats" id="stats"></div>
+            </div>
+        </aside>
+
+        <!-- List -->
+        <main class="list">
+            <div class="list-header" id="listHeader" style="display: none;">
+                <div class="list-title" id="listTitle">
+                    <i class="fas fa-list"></i>
+                    <span>0 conversations</span>
+                </div>
+            </div>
+
+            <div class="empty" id="empty">
+                <i class="fas fa-folder-open empty-icon"></i>
+                <p>Load a JSON file to start</p>
+            </div>
+
+            <div class="items" id="items"></div>
+
+            <div class="load-more" id="loadMore" style="display: none;">
+                <button class="btn-load" id="btnLoad">
+                    <i class="fas fa-chevron-down"></i>
+                    <span>Load More</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- Detail -->
+        <section class="detail" id="detail">
+            <div class="detail-empty">
+                <i class="fas fa-comment-dots detail-empty-icon"></i>
+                <p>Select a conversation to view details</p>
+            </div>
+        </section>
+    </div>
+
+    <div class="loading" id="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <script src="db.js"></script>
+    <script src="annotations.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

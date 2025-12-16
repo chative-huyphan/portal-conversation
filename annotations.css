@@ -1,0 +1,263 @@
+/* ========== PROGRESS SECTION ========== */
+.progress-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--white);
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.progress-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray-600);
+}
+
+.progress-label i {
+    color: var(--primary);
+}
+
+.progress-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: var(--gray-200);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--success));
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.btn-export {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--gray-900);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-export:hover {
+    background: var(--gray-700);
+}
+
+.btn-export i {
+    font-size: 11px;
+}
+
+/* ========== ITEM STATES ========== */
+.item.reviewed {
+    opacity: 0.6;
+    background: var(--gray-50);
+}
+
+.item.reviewed:hover {
+    opacity: 0.8;
+}
+
+.item.annotation-pick {
+    border-left: 3px solid var(--success);
+}
+
+.item.annotation-banned {
+    border-left: 3px solid var(--danger);
+}
+
+/* Quick action buttons on hover */
+.item-quick-actions {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+    gap: 4px;
+    z-index: 5;
+}
+
+.item {
+    position: relative;
+}
+
+.item:hover .item-quick-actions {
+    display: flex;
+}
+
+.btn-quick {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.btn-quick i {
+    font-size: 9px;
+}
+
+.btn-quick-pick {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.btn-quick-pick:hover {
+    background: var(--success);
+    color: var(--white);
+}
+
+.btn-quick-ban {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-quick-ban:hover {
+    background: var(--danger);
+    color: var(--white);
+}
+
+.btn-quick-clear {
+    background: rgba(107, 114, 128, 0.1);
+    color: var(--gray-600);
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.btn-quick-clear:hover {
+    background: var(--gray-600);
+    color: var(--white);
+}
+
+/* ========== ANNOTATION ACTIONS ========== */
+.annotation-actions {
+    margin-top: 20px;
+    padding: 16px;
+    background: var(--gray-50);
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+}
+
+.annotation-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-600);
+}
+
+.annotation-status i {
+    font-size: 11px;
+}
+
+.annotation-status.status-pick {
+    color: var(--success);
+}
+
+.annotation-status.status-pick i {
+    color: var(--success);
+}
+
+.annotation-status.status-banned {
+    color: var(--danger);
+}
+
+.annotation-status.status-banned i {
+    color: var(--danger);
+}
+
+.annotation-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-annotation {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 2px solid;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-annotation i {
+    font-size: 11px;
+}
+
+.btn-pick {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border-color: var(--success);
+}
+
+.btn-pick:hover {
+    background: var(--success);
+    color: var(--white);
+}
+
+.btn-ban {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+.btn-ban:hover {
+    background: var(--danger);
+    color: var(--white);
+}
+
+.btn-clear {
+    background: rgba(107, 114, 128, 0.1);
+    color: var(--gray-600);
+    border-color: var(--gray-400);
+}
+
+.btn-clear:hover {
+    background: var(--gray-600);
+    color: var(--white);
+}
+
+.btn-annotation:active {
+    transform: scale(0.95);
+}
