@@ -54,6 +54,7 @@ class ConversationDB {
             ...conversation,
             annotation, // 'pick', 'banned', or null
             notes,
+            labels: conversation.labels || [], // Array of custom labels
             annotation_at: new Date().toISOString()
         };
 
@@ -61,6 +62,114 @@ class ConversationDB {
             const request = store.put(data);
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Add a label to conversation
+    async addLabel(conversationId, label) {
+        const tx = this.db.transaction(['conversations'], 'readwrite');
+        const store = tx.objectStore('conversations');
+
+        return new Promise((resolve, reject) => {
+            const getRequest = store.get(conversationId);
+
+            getRequest.onsuccess = () => {
+                const existing = getRequest.result;
+
+                if (existing) {
+                    // Initialize labels array if not exists
+                    if (!existing.labels) {
+                        existing.labels = [];
+                    }
+                    // Add label if not already present
+                    if (!existing.labels.includes(label)) {
+                        existing.labels.push(label);
+                        existing.labels_updated_at = new Date().toISOString();
+                    }
+
+                    const putRequest = store.put(existing);
+                    putRequest.onsuccess = () => resolve(existing);
+                    putRequest.onerror = () => reject(putRequest.error);
+                } else {
+                    reject(new Error(`Conversation ${conversationId} not found`));
+                }
+            };
+
+            getRequest.onerror = () => reject(getRequest.error);
+        });
+    }
+
+    // Remove a label from conversation
+    async removeLabel(conversationId, label) {
+        const tx = this.db.transaction(['conversations'], 'readwrite');
+        const store = tx.objectStore('conversations');
+
+        return new Promise((resolve, reject) => {
+            const getRequest = store.get(conversationId);
+
+            getRequest.onsuccess = () => {
+                const existing = getRequest.result;
+
+                if (existing) {
+                    if (existing.labels) {
+                        existing.labels = existing.labels.filter(l => l !== label);
+                        existing.labels_updated_at = new Date().toISOString();
+                    }
+
+                    const putRequest = store.put(existing);
+                    putRequest.onsuccess = () => resolve(existing);
+                    putRequest.onerror = () => reject(putRequest.error);
+                } else {
+                    reject(new Error(`Conversation ${conversationId} not found`));
+                }
+            };
+
+            getRequest.onerror = () => reject(getRequest.error);
+        });
+    }
+
+    // Get all unique labels
+    async getAllLabels() {
+        const tx = this.db.transaction(['conversations'], 'readonly');
+        const store = tx.objectStore('conversations');
+
+        return new Promise((resolve, reject) => {
+            const getAllRequest = store.getAll();
+
+            getAllRequest.onsuccess = () => {
+                const allConversations = getAllRequest.result;
+                const labelsSet = new Set();
+
+                allConversations.forEach(conv => {
+                    if (conv.labels && Array.isArray(conv.labels)) {
+                        conv.labels.forEach(label => labelsSet.add(label));
+                    }
+                });
+
+                resolve(Array.from(labelsSet).sort());
+            };
+
+            getAllRequest.onerror = () => reject(getAllRequest.error);
+        });
+    }
+
+    // Get conversations by label
+    async getByLabel(label) {
+        const tx = this.db.transaction(['conversations'], 'readonly');
+        const store = tx.objectStore('conversations');
+
+        return new Promise((resolve, reject) => {
+            const getAllRequest = store.getAll();
+
+            getAllRequest.onsuccess = () => {
+                const allConversations = getAllRequest.result;
+                const filtered = allConversations.filter(conv =>
+                    conv.labels && conv.labels.includes(label)
+                );
+                resolve(filtered);
+            };
+
+            getAllRequest.onerror = () => reject(getAllRequest.error);
         });
     }
 
@@ -106,6 +215,38 @@ class ConversationDB {
                     resolve(dataToSave);
                 };
                 putRequest.onerror = () => reject(putRequest.error);
+            };
+
+            getRequest.onerror = () => reject(getRequest.error);
+        });
+    }
+
+    // Mark conversation as unread (clear read status)
+    async markConversationAsUnread(conversation) {
+        const tx = this.db.transaction(['conversations'], 'readwrite');
+        const store = tx.objectStore('conversations');
+
+        return new Promise((resolve, reject) => {
+            const getRequest = store.get(conversation.conversation_id);
+
+            getRequest.onsuccess = () => {
+                const existing = getRequest.result;
+
+                if (existing) {
+                    // Clear read status
+                    existing.read = false;
+                    existing.read_at = null;
+
+                    const putRequest = store.put(existing);
+                    putRequest.onsuccess = () => {
+                        console.log(`✅ Marked ${conversation.conversation_id} as unread`);
+                        resolve(existing);
+                    };
+                    putRequest.onerror = () => reject(putRequest.error);
+                } else {
+                    // If not in DB, nothing to do
+                    resolve(null);
+                }
             };
 
             getRequest.onerror = () => reject(getRequest.error);
@@ -248,7 +389,8 @@ class ConversationDB {
                             notes: existing?.notes || conv.notes || '',
                             annotation_at: existing?.annotation_at || conv.annotation_at,
                             read: existing?.read || conv.read || false,
-                            read_at: existing?.read_at || conv.read_at
+                            read_at: existing?.read_at || conv.read_at,
+                            labels: existing?.labels || conv.labels || []
                         };
 
                         const putRequest = store.put(dataToSave);
@@ -310,3 +452,4 @@ class ConversationDB {
 
 // Export singleton instance
 const conversationDB = new ConversationDB();
+window.conversationDB = conversationDB;

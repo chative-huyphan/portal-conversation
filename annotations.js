@@ -1,12 +1,13 @@
 // Annotation System Integration
 
 // Initialize DB on page load
-let dbReady = false;
+let     dbReady = false;
 
 (async function initAnnotationSystem() {
     try {
         await conversationDB.init();
         dbReady = true;
+        window.dbReady = dbReady;  // Expose to global
         console.log('✅ Annotation system ready');
 
         // Restore session if exists
@@ -40,18 +41,35 @@ async function quickAnnotate(event, conversationId, annotation) {
 
         console.log(`💾 Saving annotation for ${conversationId}...`);
 
-        // Save annotation (null = clear/unread) - IMMEDIATE SAVE
-        await conversationDB.saveConversation(conversation, annotation);
+        if (annotation === null) {
+            // Clear annotation AND mark as unread
+            await conversationDB.saveConversation(conversation, null);
+            await conversationDB.markConversationAsUnread(conversation);
 
-        console.log(`✅ Saved to IndexedDB immediately`);
+            // Sync to data object
+            conversation._annotation = null;
+            conversation._read = false;
 
-        // Sync annotation data into data object for filtering
-        conversation._annotation = annotation;
+            console.log(`✅ Cleared annotation and marked as unread`);
+        } else {
+            // Save annotation (pick/banned) - IMMEDIATE SAVE
+            await conversationDB.saveConversation(conversation, annotation);
+
+            // Sync annotation data into data object for filtering
+            conversation._annotation = annotation;
+
+            console.log(`✅ Saved to IndexedDB immediately`);
+        }
 
         // Update UI for this specific item
         const itemEl = document.querySelector(`[data-conversation-id="${conversationId}"]`);
         if (itemEl) {
             updateItemAnnotationState(itemEl, annotation);
+
+            // Update read class
+            if (annotation === null) {
+                itemEl.classList.remove('read');
+            }
         }
 
         const action = annotation === 'pick' ? 'Picked' : annotation === 'banned' ? 'Banned' : 'Cleared';
@@ -364,7 +382,8 @@ async function syncAllAnnotations() {
         allAnnotations.forEach(conv => {
             annotationMap.set(conv.conversation_id, {
                 annotation: conv.annotation,
-                read: conv.read || false
+                read: conv.read || false,
+                labels: conv.labels || []
             });
         });
 
@@ -375,10 +394,12 @@ async function syncAllAnnotations() {
             if (annot) {
                 item._annotation = annot.annotation;
                 item._read = annot.read;
+                item.labels = annot.labels;
                 if (annot.read) readCount++;
             } else {
                 item._annotation = null;
                 item._read = false;
+                item.labels = [];
             }
         });
 
@@ -387,6 +408,7 @@ async function syncAllAnnotations() {
         console.error('Failed to sync annotations:', error);
     }
 }
+
 
 // Make functions globally available
 window.quickAnnotate = quickAnnotate;

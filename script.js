@@ -29,6 +29,7 @@ const filterStatus = document.getElementById('filterStatus');
 const filterLanguage = document.getElementById('filterLanguage');
 const filterMessages = document.getElementById('filterMessages');
 const filterDuration = document.getElementById('filterDuration');
+const filterLabel = document.getElementById('filterLabel');
 const clearFilters = document.getElementById('clearFilters');
 const exportAnnotationsBtn = document.getElementById('exportAnnotations');
 
@@ -46,6 +47,7 @@ filterStatus.addEventListener('change', applyFilters);
 filterLanguage.addEventListener('change', applyFilters);
 filterMessages.addEventListener('change', applyFilters);
 filterDuration.addEventListener('change', applyFilters);
+filterLabel.addEventListener('change', applyFilters);
 clearFilters.addEventListener('click', resetFilters);
 
 // Export button
@@ -119,7 +121,8 @@ async function handleFile(e) {
             _index: i,
             _duration: calcDuration(item.start_time, item.end_time),
             _count: (item.messages || []).length,
-            _avgResponse: calcAvgResponse(item.messages || [])
+            _avgResponse: calcAvgResponse(item.messages || []),
+            labels: item.labels || [] // Initialize empty labels array
         }));
 
         filtered = [...data];
@@ -131,6 +134,9 @@ async function handleFile(e) {
 
             // Sync annotations from DB to data objects for filtering
             await syncAllAnnotations();
+
+            // Update label filter options
+            await updateLabelFilterOptions();
 
             // Show progress section
             const progressSection = document.getElementById('progressSection');
@@ -233,6 +239,7 @@ function applyFilters() {
     const language = filterLanguage.value;
     const messages = filterMessages.value;
     const duration = filterDuration.value;
+    const labelFilter = filterLabel.value;
 
     filtered = data.filter(item => {
         // Search filter
@@ -287,6 +294,12 @@ function applyFilters() {
             if (duration === '15-30' && (dur < 15 || dur > 30)) return false;
             if (duration === '30-60' && (dur < 30 || dur > 60)) return false;
             if (duration === '60+' && dur < 60) return false;
+        }
+
+        // Label filter
+        if (labelFilter) {
+            const itemLabels = item.labels || [];
+            if (!itemLabels.includes(labelFilter)) return false;
         }
 
         // Annotation filter (uses cached annotation from item)
@@ -433,6 +446,11 @@ function createItem(item) {
             <span class="badge"><i class="fas fa-comment"></i>${item._count} msgs</span>
             ${item._duration ? `<span class="badge"><i class="far fa-clock"></i>${formatDuration(item._duration)}</span>` : ''}
         </div>
+        ${(item.labels && item.labels.length > 0) ? `
+        <div class="item-labels">
+            ${item.labels.map(label => `<span class="item-label-tag">${escape(label)}</span>`).join('')}
+        </div>
+        ` : ''}
         <div class="item-preview">${escape(preview)}</div>
 
         <div class="item-quick-actions">
@@ -593,6 +611,30 @@ function renderDetail(item) {
                 </div>
                 ` : ''}
             </div>
+
+            <div class="detail-labels-section">
+                <div class="detail-label-title">
+                    <i class="fas fa-tag"></i>
+                    <span>Labels</span>
+                </div>
+                <input
+                    type="text"
+                    class="label-input"
+                    id="labelInput"
+                    placeholder="Add label..."
+                    data-conversation-id="${item.conversation_id}"
+                >
+                <div class="labels-display" id="labelsDisplay">
+                    ${(item.labels || []).map(label => `
+                        <span class="label-tag">
+                            ${escape(label)}
+                            <button class="label-remove" onclick="removeLabel('${item.conversation_id}', '${label}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </span>
+                    `).join('')}
+                </div>
+            </div>
         </div>
 
         <div class="messages">
@@ -748,3 +790,128 @@ function copy(text, btn) {
 }
 
 window.copy = copy;
+// Labels Management
+async function addLabel(conversationId, label) {
+    if (!label) return;
+
+    const item = data.find(i => i.conversation_id === conversationId);
+    if (!item) return;
+
+    if (!item.labels.includes(label)) {
+        item.labels.push(label);
+
+        // Save to DB if available
+        if (window.dbReady && window.conversationDB) {
+            try {
+                await conversationDB.addLabel(conversationId, label);
+                console.log(`✅ Saved label "${label}" to DB for ${conversationId}`);
+            } catch (err) {
+                console.error('❌ Error saving label to DB:', err);
+            }
+        }
+
+        updateLabelDisplay(conversationId);
+        updateLabelFilterOptions();
+    }
+}
+
+async function removeLabel(conversationId, label) {
+    const item = data.find(i => i.conversation_id === conversationId);
+    if (!item) return;
+
+    item.labels = item.labels.filter(l => l !== label);
+
+    // Save to DB if available
+    if (window.dbReady && window.conversationDB) {
+        try {
+            await conversationDB.removeLabel(conversationId, label);
+            console.log(`✅ Removed label "${label}" from DB for ${conversationId}`);
+        } catch (err) {
+            console.error('❌ Error removing label from DB:', err);
+        }
+    }
+
+    updateLabelDisplay(conversationId);
+    updateLabelFilterOptions();
+}
+
+function updateLabelDisplay(conversationId) {
+    const item = data.find(i => i.conversation_id === conversationId);
+    if (!item) return;
+
+    // Update detail view labels
+    const labelsDisplay = document.getElementById('labelsDisplay');
+    if (labelsDisplay) {
+        labelsDisplay.innerHTML = (item.labels || []).map(label => `
+            <span class="label-tag">
+                ${escape(label)}
+                <button class="label-remove" onclick="removeLabel('${item.conversation_id}', '${label}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </span>
+        `).join('');
+    }
+
+    // Update list item labels
+    const itemEl = document.querySelector(`[data-conversation-id="${conversationId}"]`);
+    if (itemEl) {
+        let labelsSection = itemEl.querySelector('.item-labels');
+        if ((item.labels || []).length > 0) {
+            if (!labelsSection) {
+                labelsSection = document.createElement('div');
+                labelsSection.className = 'item-labels';
+                const previewEl = itemEl.querySelector('.item-preview');
+                previewEl.parentNode.insertBefore(labelsSection, previewEl);
+            }
+            labelsSection.innerHTML = item.labels.map(label => `<span class="item-label-tag">${escape(label)}</span>`).join('');
+        } else if (labelsSection) {
+            labelsSection.remove();
+        }
+    }
+}
+
+async function updateLabelFilterOptions() {
+    try {
+        const allLabels = await conversationDB.getAllLabels();
+        const filterLabelSelect = document.getElementById('filterLabel');
+
+        if (filterLabelSelect) {
+            const currentValue = filterLabelSelect.value;
+
+            // Keep "All Labels" option
+            filterLabelSelect.innerHTML = '<option value="">All Labels</option>';
+
+            // Add all labels as options
+            allLabels.forEach(label => {
+                const option = document.createElement('option');
+                option.value = label;
+                option.textContent = label;
+                filterLabelSelect.appendChild(option);
+            });
+
+            // Restore previous selection if still available
+            if (currentValue && allLabels.includes(currentValue)) {
+                filterLabelSelect.value = currentValue;
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error updating label filter:', error);
+    }
+}
+
+// Handle label input in detail view
+document.addEventListener('keypress', async function(e) {
+    const labelInput = document.getElementById('labelInput');
+    if (e.target === labelInput && e.key === 'Enter') {
+        e.preventDefault();
+        const label = labelInput.value.trim();
+        if (label) {
+            const conversationId = labelInput.dataset.conversationId;
+            await addLabel(conversationId, label);
+            labelInput.value = '';
+        }
+    }
+});
+
+window.addLabel = addLabel;
+window.removeLabel = removeLabel;
