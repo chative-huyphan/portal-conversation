@@ -149,12 +149,12 @@ async function handleFile(e) {
                 console.log('✅ Background: Import complete');
                 await syncAllAnnotations();
                 await updateLabelFilterOptions();
-                
+
                 const progressSection = document.getElementById('progressSection');
                 if (progressSection) {
                     progressSection.style.display = 'block';
                 }
-                
+
                 // Re-render to show annotations
                 page = 0;
                 items.innerHTML = '';
@@ -641,13 +641,69 @@ function renderDetail(item) {
         <div class="messages">
             <div class="msg-list">
                 ${msgs.map(m => {
+                    // 1. EVENT - Display centered with faded text
                     if (m.event) {
-                        return `<div class="msg-event"><i class="fas fa-info-circle"></i> ${escape(m.text || m.event)}</div>`;
+                        return `
+                            <div class="msg-event">
+                                <div class="event-line"></div>
+                                <div class="event-content">
+                                    <i class="fas fa-sticky-note"></i>
+                                    <span>${escape(m.text || m.event)}</span>
+                                </div>
+                                <div class="event-line"></div>
+                            </div>
+                        `;
                     }
 
                     const type = m.from === 'agent' ? 'agent' : (m.from === 'bot' ? 'bot' : 'user');
                     const senderIcon = m.from === 'agent' ? 'fa-headset' : (m.from === 'bot' ? 'fa-robot' : 'fa-user');
                     const senderText = m.from === 'agent' ? 'Agent' : (m.from === 'bot' ? 'Bot' : 'User');
+
+                    // 2. REPLY-TO - Display quoted message
+                    let replyToHtml = '';
+                    if (m.reply_to) {
+                        const replyFrom = m.reply_to.from_name || m.reply_to.from_type || 'Unknown';
+                        let replyText = m.reply_to.text || '';
+
+                        // If no text but has attachments, show "Sent an attachment"
+                        if (!replyText && m.reply_to.attachments && m.reply_to.attachments.length > 0) {
+                            replyText = 'Sent an attachment';
+                        }
+
+                        replyToHtml = `
+                            <div class="msg-reply-to">
+                                <div class="reply-to-indicator"></div>
+                                <div class="reply-to-content">
+                                    <div class="reply-to-header">
+                                        <i class="fas fa-reply"></i>
+                                        <span>${escape(replyFrom)}</span>
+                                    </div>
+                                    <div class="reply-to-text">${escape(replyText)}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // 3. ATTACHMENT - Display file/image/video (handle both object and array)
+                    let attachmentHtml = '';
+                    if (m.attachment) {
+                        // Handle array of attachments (e.g., quick replies)
+                        if (Array.isArray(m.attachment)) {
+                            attachmentHtml = m.attachment.map(att => renderAttachment(att)).join('');
+                        } else {
+                            // Handle single attachment object
+                            attachmentHtml = renderAttachment(m.attachment);
+                        }
+                    }
+
+                    // 4. TEXT MESSAGE
+                    // If no text but has attachment, show "Sent an attachment"
+                    let textHtml = '';
+                    if (m.text) {
+                        textHtml = `<div class="msg-text">${escape(m.text)}</div>`;
+                    } else if (m.attachment) {
+                        textHtml = `<div class="msg-text msg-text-placeholder">Sent an attachment</div>`;
+                    }
 
                     return `
                         <div class="msg ${type}">
@@ -655,7 +711,9 @@ function renderDetail(item) {
                                 <span class="msg-sender"><i class="fas ${senderIcon}"></i> ${senderText}</span>
                                 <span>${formatTime(m.time)}</span>
                             </div>
-                            <div class="msg-text">${escape(m.text || '')}</div>
+                            ${replyToHtml}
+                            ${textHtml}
+                            ${attachmentHtml}
                         </div>
                     `;
                 }).join('')}
@@ -766,6 +824,120 @@ function showLoading() {
 
 function hideLoading() {
     loading.style.display = 'none';
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// Render attachment based on type
+function renderAttachment(att) {
+    if (!att || !att.type) return '';
+
+    const type = att.type.toLowerCase();
+    const filename = att.filename || 'Attachment';
+    const size = att.size ? formatFileSize(att.size) : '';
+
+    switch (type) {
+        case 'image':
+            return `
+                <div class="msg-attachment msg-attachment-image">
+                    ${att.url ? `
+                        <a href="${att.url}" target="_blank" class="attachment-image-link">
+                            <img src="${att.url}" alt="${escape(filename)}" class="attachment-image" loading="lazy">
+                        </a>
+                    ` : `
+                        <div class="attachment-placeholder">
+                            <i class="fas fa-image"></i>
+                            <span>${escape(filename)}</span>
+                        </div>
+                    `}
+                </div>
+            `;
+
+        case 'file':
+            return `
+                <div class="msg-attachment msg-attachment-file">
+                    <div class="attachment-file-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="attachment-file-info">
+                        <div class="attachment-file-name">${escape(filename)}</div>
+                        ${size ? `<div class="attachment-file-size">${size}</div>` : ''}
+                    </div>
+                    ${att.url ? `
+                        <a href="${att.url}" target="_blank" class="attachment-download-btn" title="Download">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    ` : ''}
+                </div>
+            `;
+
+        case 'video':
+            return `
+                <div class="msg-attachment msg-attachment-video">
+                    ${att.url ? `
+                        <video controls class="attachment-video">
+                            <source src="${att.url}" type="${att.mime_type || 'video/mp4'}">
+                            Your browser does not support video playback.
+                        </video>
+                    ` : `
+                        <div class="attachment-placeholder">
+                            <i class="fas fa-video"></i>
+                            <span>${escape(filename)}</span>
+                        </div>
+                    `}
+                </div>
+            `;
+
+        case 'audio':
+            return `
+                <div class="msg-attachment msg-attachment-audio">
+                    ${att.url ? `
+                        <audio controls class="attachment-audio">
+                            <source src="${att.url}" type="${att.mime_type || 'audio/mpeg'}">
+                            Your browser does not support audio playback.
+                        </audio>
+                        <div class="attachment-audio-name">${escape(filename)}</div>
+                    ` : `
+                        <div class="attachment-placeholder">
+                            <i class="fas fa-music"></i>
+                            <span>${escape(filename)}</span>
+                        </div>
+                    `}
+                </div>
+            `;
+
+        case 'template':
+            return `
+                <div class="msg-attachment msg-attachment-template">
+                    <div class="attachment-template-icon">
+                        <i class="fas fa-th-large"></i>
+                    </div>
+                    <div class="attachment-template-text">Template Message</div>
+                </div>
+            `;
+
+        case 'quick_reply':
+            return `
+                <div class="msg-attachment msg-attachment-quick-reply">
+                    <div class="quick-reply-icon">${att.icon || '💬'}</div>
+                    <div class="quick-reply-title">${escape(att.title || 'Quick Reply')}</div>
+                </div>
+            `;
+
+        default:
+            return `
+                <div class="msg-attachment msg-attachment-unknown">
+                    <i class="fas fa-paperclip"></i>
+                    <span>${escape(type)}: ${escape(filename)}</span>
+                </div>
+            `;
+    }
 }
 
 // Copy
